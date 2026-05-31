@@ -125,7 +125,7 @@ function App() {
   const handleLogin = async () => {
     await track("login_quero_testar");
     setIsLoggedIn(true);
-    window.history.replaceState(null, "", "/");
+    window.history.replaceState(null, "", window.location.pathname + window.location.search);
   };
 
   return (
@@ -249,7 +249,20 @@ function DemoPage({
   stats: StatsResponse;
   track: (target: string, type?: ClickEventPayload["type"]) => Promise<void>;
 }) {
-  const [activeView, setActiveView] = useState<"manager" | "student">("manager");
+  const viewParam = new URLSearchParams(window.location.search).get("view");
+  const [activeView, setActiveView] = useState<"manager" | "student">(
+    viewParam === "student" ? "student" : "manager",
+  );
+
+  const shareViewLink = (view: "manager" | "student") => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("view", view);
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(url.toString());
+      return;
+    }
+    window.prompt("Copie este link para compartilhar:", url.toString());
+  };
 
   const changeView = async (view: "manager" | "student") => {
     setActiveView(view);
@@ -274,24 +287,33 @@ function DemoPage({
             </h1>
           </div>
 
-          <div className="flex rounded-md border border-slate-200 bg-slate-100 p-1">
+          <div className="flex items-center gap-3">
+            <div className="flex rounded-md border border-slate-200 bg-slate-100 p-1">
+              <button
+                type="button"
+                onClick={() => changeView("manager")}
+                className={`min-h-11 rounded px-4 text-sm font-bold transition ${
+                  activeView === "manager"
+                    ? "bg-white text-cobalt shadow-sm"
+                    : "text-slate-600 hover:text-slate-950"
+                }`}
+              >
+                Visão do gestor
+              </button>
+              <button
+                type="button"
+                onClick={() => changeView("student")}
+                className="min-h-11 rounded px-4 text-sm font-bold text-slate-600 transition hover:text-slate-950"
+              >
+                Visão do aluno
+              </button>
+            </div>
             <button
               type="button"
-              onClick={() => changeView("manager")}
-              className={`min-h-11 rounded px-4 text-sm font-bold transition ${
-                activeView === "manager"
-                  ? "bg-white text-cobalt shadow-sm"
-                  : "text-slate-600 hover:text-slate-950"
-              }`}
+              onClick={() => shareViewLink(activeView)}
+              className="min-h-11 rounded-md border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
             >
-              Visão do gestor
-            </button>
-            <button
-              type="button"
-              onClick={() => changeView("student")}
-              className="min-h-11 rounded px-4 text-sm font-bold text-slate-600 transition hover:text-slate-950"
-            >
-              Visão do aluno
+              Copiar link {activeView === "manager" ? "gestor" : "aluno"}
             </button>
           </div>
         </div>
@@ -306,7 +328,11 @@ function DemoPage({
           track={track}
         />
       ) : (
-        <StudentImpactView onGoManager={() => changeView("manager")} track={track} />
+        <StudentImpactView
+          onGoManager={() => changeView("manager")}
+          track={track}
+          shareLink={() => shareViewLink("student")}
+        />
       )}
     </div>
   );
@@ -437,9 +463,11 @@ function ManagerView({
 function StudentImpactView({
   onGoManager,
   track,
+  shareLink,
 }: {
   onGoManager: () => void;
   track: (target: string, type?: ClickEventPayload["type"]) => Promise<void>;
+  shareLink: () => void;
 }) {
   return (
     <section className="student-learning-shell min-h-screen overflow-hidden">
@@ -475,6 +503,13 @@ function StudentImpactView({
               className="rounded-full border border-violet-400/70 px-3 py-1 text-violet-200"
             >
               Gestor
+            </button>
+            <button
+              type="button"
+              onClick={shareLink}
+              className="rounded-full border border-cyan-400/70 px-3 py-1 text-cyan-200"
+            >
+              Copiar link aluno
             </button>
           </nav>
 
