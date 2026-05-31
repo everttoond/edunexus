@@ -45,7 +45,7 @@ const guideSteps: Array<{
   {
     title: "5 - Adaptação resumo",
     description: "Por fim, ele acessa o resumo textual adaptado, com opção de copiar o conteúdo.",
-    nextLabel: "Reiniciar guia",
+    nextLabel: "Finalizar",
   },
 ];
 
@@ -321,6 +321,7 @@ function DemoPage({
     viewParam === "student" ? "student" : "manager",
   );
   const [guideStep, setGuideStep] = useState<GuideStep>(0);
+  const [isGuideOpen, setIsGuideOpen] = useState(true);
   const currentGuideStep = guideSteps[guideStep];
 
   const shareViewLink = (view: "manager" | "student") => {
@@ -339,10 +340,21 @@ function DemoPage({
   };
 
   const advanceGuide = async () => {
-    const nextStep = (guideStep === 4 ? 0 : guideStep + 1) as GuideStep;
+    if (guideStep === 4) {
+      setIsGuideOpen(false);
+      await track("guia_finalizado");
+      return;
+    }
+
+    const nextStep = (guideStep + 1) as GuideStep;
     setGuideStep(nextStep);
     setActiveView(nextStep <= 2 ? "manager" : "student");
     await track(`guia_etapa_${nextStep + 1}`);
+  };
+
+  const closeGuide = async () => {
+    setIsGuideOpen(false);
+    await track("guia_fechado");
   };
 
   return (
@@ -374,7 +386,7 @@ function DemoPage({
                     : "text-slate-600 hover:text-slate-950"
                 }`}
               >
-                {guideStep === 0 && <GuideMarker onActivate={advanceGuide} />}
+                {isGuideOpen && guideStep === 0 && <GuideMarker onActivate={advanceGuide} />}
                 Visão do gestor
               </button>
               <button
@@ -382,7 +394,7 @@ function DemoPage({
                 onClick={() => changeView("student")}
                 className="relative min-h-11 rounded px-4 text-sm font-bold text-slate-600 transition hover:text-slate-950"
               >
-                {guideStep === 2 && <GuideMarker onActivate={advanceGuide} />}
+                {isGuideOpen && guideStep === 2 && <GuideMarker onActivate={advanceGuide} />}
                 Visão do aluno
               </button>
             </div>
@@ -408,6 +420,7 @@ function DemoPage({
       {activeView === "manager" ? (
         <ManagerView
           apiOnline={apiOnline}
+          guideOpen={isGuideOpen}
           guideStep={guideStep}
           onGuideNext={advanceGuide}
           refreshStats={refreshStats}
@@ -417,19 +430,23 @@ function DemoPage({
       ) : (
         <StudentImpactView
           guideStep={guideStep}
+          guideOpen={isGuideOpen}
           onGuideNext={advanceGuide}
           onGoManager={() => changeView("manager")}
           track={track}
           shareLink={() => shareViewLink("student")}
         />
       )}
-      <GuidedTourPanel
-        currentStep={guideStep}
-        description={currentGuideStep.description}
-        nextLabel={currentGuideStep.nextLabel}
-        onNext={advanceGuide}
-        title={currentGuideStep.title}
-      />
+      {isGuideOpen && (
+        <GuidedTourPanel
+          currentStep={guideStep}
+          description={currentGuideStep.description}
+          nextLabel={currentGuideStep.nextLabel}
+          onClose={closeGuide}
+          onNext={advanceGuide}
+          title={currentGuideStep.title}
+        />
+      )}
     </div>
   );
 }
@@ -467,18 +484,29 @@ function GuidedTourPanel({
   currentStep,
   description,
   nextLabel,
+  onClose,
   onNext,
   title,
 }: {
   currentStep: GuideStep;
   description: string;
   nextLabel: string;
+  onClose: () => Promise<void>;
   onNext: () => Promise<void>;
   title: string;
 }) {
   return (
     <aside className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-xl rounded-lg border border-slate-200 bg-white p-4 text-slate-950 shadow-[0_24px_80px_rgba(15,23,42,0.22)] md:bottom-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <button
+        type="button"
+        onClick={() => void onClose()}
+        className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full text-lg font-black text-slate-500 transition hover:bg-slate-100 hover:text-slate-950"
+        aria-label="Sair do tour guiado"
+        title="Sair do tour"
+      >
+        ×
+      </button>
+      <div className="flex flex-col gap-4 pr-8 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
             <span className="grid h-8 w-8 place-items-center rounded-full bg-cyan-300 text-sm font-black text-slate-950">
@@ -504,6 +532,7 @@ function GuidedTourPanel({
 
 function ManagerView({
   apiOnline,
+  guideOpen,
   guideStep,
   onGuideNext,
   refreshStats,
@@ -511,6 +540,7 @@ function ManagerView({
   track,
 }: {
   apiOnline: boolean;
+  guideOpen: boolean;
   guideStep: GuideStep;
   onGuideNext: () => Promise<void>;
   refreshStats: () => Promise<void>;
@@ -665,7 +695,7 @@ function ManagerView({
         </div>
 
         <div className="relative rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:p-6">
-          {guideStep === 1 && <GuideMarker onActivate={onGuideNext} />}
+          {guideOpen && guideStep === 1 && <GuideMarker onActivate={onGuideNext} />}
           <p className="text-xs font-black uppercase tracking-[0.16em] text-cobalt">
             Recomendações da IA
           </p>
@@ -1099,12 +1129,14 @@ function LegacyManagerView({
 
 function StudentImpactView({
   guideStep,
+  guideOpen,
   onGuideNext,
   onGoManager,
   track,
   shareLink,
 }: {
   guideStep: GuideStep;
+  guideOpen: boolean;
   onGuideNext: () => Promise<void>;
   onGoManager: () => void;
   track: (target: string, type?: ClickEventPayload["type"]) => Promise<void>;
@@ -1235,7 +1267,7 @@ function StudentImpactView({
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <StudentAdaptedTab
                 active={activeContent === "infographic"}
-                guideActive={guideStep === 3}
+                guideActive={guideOpen && guideStep === 3}
                 onGuideNext={onGuideNext}
                 title="Infográfico"
                 text="Visualize os principais conceitos desta aula."
@@ -1243,7 +1275,7 @@ function StudentImpactView({
               />
               <StudentAdaptedTab
                 active={activeContent === "summary"}
-                guideActive={guideStep === 4}
+                guideActive={guideOpen && guideStep === 4}
                 onGuideNext={onGuideNext}
                 title="Resumo do vídeo"
                 text="Leia um resumo adaptado com o essencial da aula."
