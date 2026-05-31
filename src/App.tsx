@@ -195,6 +195,38 @@ function LoginScreen({ onLogin }: { onLogin: () => Promise<void> }) {
         <p className="reference-copyright-override">
           © 2026 EduNexus. Todos os direitos reservados.
         </p>
+        <div className="mobile-login-content">
+          <div>
+            <div className="mobile-login-brand">
+              <span className="mobile-login-mark" />
+              <div>
+                <p>EduNexus</p>
+                <span>Conecta · Orquestra · Transforma</span>
+              </div>
+            </div>
+            <p className="mt-8 inline-flex rounded-lg border border-cyan-400/60 bg-[#081225]/75 px-4 py-2 text-xs font-bold uppercase tracking-[0.08em] text-white">
+              MVP demonstrativo
+            </p>
+            <h1 className="mt-5 text-4xl font-black leading-tight tracking-normal text-white">
+              Aprendizagem <span>adaptativa</span> para o ensino superior
+            </h1>
+            <p className="mt-4 text-base leading-7 text-slate-300">
+              Acesse a simulacao da plataforma EduNexus com visao do gestor e jornada do aluno.
+            </p>
+          </div>
+          <div className="mobile-login-panel">
+            <h2>Bem-vindo ao EduNexus</h2>
+            <p>Acesse uma simulacao de aula adaptativa sobre Andragogia no Ensino Superior.</p>
+            <button
+              type="button"
+              onClick={() => onLogin()}
+              disabled={isSubmitting}
+              className="mt-6 min-h-14 w-full rounded-xl bg-gradient-to-r from-violet-500 to-blue-500 px-5 text-base font-black text-white shadow-[0_18px_45px_rgba(37,99,235,0.32)]"
+            >
+              Quero testar
+            </button>
+          </div>
+        </div>
         <form
           onSubmit={handleSubmit}
           className="reference-login-form"
@@ -287,8 +319,8 @@ function DemoPage({
             </h1>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="flex rounded-md border border-slate-200 bg-slate-100 p-1">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="grid grid-cols-2 rounded-md border border-slate-200 bg-slate-100 p-1 sm:flex">
               <button
                 type="button"
                 onClick={() => changeView("manager")}
@@ -472,7 +504,7 @@ function StudentImpactView({
   return (
     <section className="student-learning-shell min-h-screen overflow-hidden">
       <header className="relative z-10 border-b border-white/10 bg-[#050b1d]/90">
-        <div className="mx-auto flex max-w-[1480px] items-center justify-between gap-6 px-6 py-5">
+        <div className="mx-auto flex max-w-[1480px] flex-col gap-4 px-5 py-4 md:flex-row md:items-center md:justify-between md:px-6 md:py-5">
           <div className="flex items-center gap-3">
             <div className="student-logo-mark" aria-hidden="true">
               <span />
@@ -513,7 +545,23 @@ function StudentImpactView({
             </button>
           </nav>
 
-          <div className="flex items-center gap-5">
+          <div className="flex w-full items-center justify-between gap-4 md:w-auto md:justify-end md:gap-5">
+            <div className="flex gap-2 lg:hidden">
+              <button
+                type="button"
+                onClick={onGoManager}
+                className="min-h-10 rounded-full border border-violet-400/70 px-3 text-xs font-bold text-violet-200"
+              >
+                Gestor
+              </button>
+              <button
+                type="button"
+                onClick={shareLink}
+                className="min-h-10 rounded-full border border-cyan-400/70 px-3 text-xs font-bold text-cyan-200"
+              >
+                Link aluno
+              </button>
+            </div>
             <button className="hidden text-2xl text-white md:block" type="button" aria-label="Buscar">
               ⌕
             </button>
@@ -535,7 +583,7 @@ function StudentImpactView({
 
       <div className="student-network-bg" aria-hidden="true" />
 
-      <main className="relative z-10 mx-auto grid max-w-[1180px] gap-8 px-5 py-6 lg:grid-cols-[1fr_278px] lg:px-0">
+      <main className="relative z-10 mx-auto grid max-w-[1180px] gap-6 px-5 py-6 lg:grid-cols-[1fr_278px] lg:gap-8 lg:px-0">
         <div>
           <div className="text-sm text-slate-300">
             Meus Cursos <span className="mx-2 text-slate-500">›</span> Metodologias Ativas e
@@ -549,7 +597,7 @@ function StudentImpactView({
             </span>
           </h1>
 
-          <div className="mt-4 flex flex-wrap gap-6 text-sm text-slate-300">
+          <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-300">
             <span>Profª Dra. Camila Rezende</span>
             <span>Módulo 1 - Fundamentos da Andragogia</span>
             <span>28 min</span>
@@ -580,7 +628,7 @@ function StudentImpactView({
               <div className="h-1 rounded-full bg-white/15">
                 <div className="h-1 w-[24%] rounded-full bg-gradient-to-r from-violet-500 to-cyan-400" />
               </div>
-              <div className="mt-4 flex items-center gap-5 text-white">
+              <div className="student-video-controls mt-4 flex items-center gap-5 text-white">
                 <button
                   type="button"
                   onClick={() => track("aluno_play_video")}
@@ -643,7 +691,7 @@ function StudentImpactView({
           </article>
         </div>
 
-        <aside className="space-y-5 pt-24 lg:pt-[128px]">
+        <aside className="space-y-5 pt-0 lg:pt-[128px]">
           <div className="rounded-xl border border-white/15 bg-white/[0.055] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
             <h2 className="text-xl font-black text-white">Seu progresso</h2>
             <div className="mt-7 flex items-center gap-5">

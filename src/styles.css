@@ -21,6 +21,7 @@ html {
 body {
   margin: 0;
   min-width: 320px;
+  overflow-x: hidden;
 }
 
 code {
@@ -61,6 +62,10 @@ code {
 .reference-login-form {
   position: absolute;
   inset: 0;
+}
+
+.mobile-login-content {
+  display: none;
 }
 
 .reference-copyright-override {
@@ -482,5 +487,208 @@ code {
 
   .book-illustration {
     inset-inline: 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .reference-login-shell {
+    min-height: 100svh;
+    place-items: stretch;
+  }
+
+  .reference-login-frame {
+    width: 100vw;
+    height: auto;
+    min-height: 100svh;
+    overflow: hidden;
+  }
+
+  .reference-login-image {
+    position: absolute;
+    inset: 0;
+    height: 100%;
+    object-fit: cover;
+    object-position: 37% center;
+    opacity: 0.46;
+    filter: saturate(1.1);
+  }
+
+  .reference-login-form,
+  .reference-copyright-override {
+    display: none;
+  }
+
+  .mobile-login-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    min-height: 100svh;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 24px 20px;
+    background:
+      radial-gradient(circle at 50% 38%, rgba(37, 99, 235, 0.22), transparent 34%),
+      linear-gradient(180deg, rgba(2, 6, 23, 0.52), rgba(2, 6, 23, 0.96));
+  }
+
+  .mobile-login-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .mobile-login-brand p {
+    margin: 0;
+    background: linear-gradient(90deg, #2563eb, #22d3ee);
+    background-clip: text;
+    color: transparent;
+    font-size: 32px;
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  .mobile-login-brand span {
+    color: rgba(226, 232, 240, 0.72);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .mobile-login-mark {
+    width: 48px;
+    height: 48px;
+    border: 2px solid #22d3ee;
+    border-radius: 999px;
+    box-shadow: inset 0 0 0 14px rgba(124, 58, 237, 0.16), 0 0 28px rgba(14, 165, 233, 0.38);
+  }
+
+  .mobile-login-content h1 span {
+    background: linear-gradient(90deg, #a855f7, #22d3ee);
+    background-clip: text;
+    color: transparent;
+  }
+
+  .mobile-login-panel {
+    margin-top: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 22px;
+    background: rgba(7, 17, 35, 0.86);
+    padding: 24px;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+    backdrop-filter: blur(14px);
+  }
+
+  .mobile-login-panel h2 {
+    margin: 0;
+    background: linear-gradient(90deg, #a855f7, #38bdf8);
+    background-clip: text;
+    color: transparent;
+    font-size: 25px;
+    font-weight: 900;
+  }
+
+  .mobile-login-panel p {
+    margin-top: 10px;
+    color: #cbd5e1;
+    line-height: 1.6;
+  }
+
+  .student-logo-mark {
+    width: 44px;
+    height: 44px;
+  }
+
+  .student-logo-mark::before {
+    inset: 14px;
+  }
+
+  .student-logo-mark span {
+    width: 7px;
+    height: 7px;
+  }
+
+  .student-logo-mark span:nth-child(1) { left: 18px; top: 0; }
+  .student-logo-mark span:nth-child(2) { right: 3px; top: 10px; }
+  .student-logo-mark span:nth-child(3) { right: 3px; bottom: 10px; }
+  .student-logo-mark span:nth-child(4) { left: 18px; bottom: 0; }
+  .student-logo-mark span:nth-child(5) { left: 3px; bottom: 10px; }
+  .student-logo-mark span:nth-child(6) { left: 3px; top: 10px; }
+
+  .student-video-scene {
+    min-height: 236px;
+  }
+
+  .video-brand {
+    left: 18px;
+    top: 28px;
+    font-size: 23px;
+  }
+
+  .professor-portrait {
+    left: 19%;
+    bottom: -24px;
+    transform: scale(0.72);
+    transform-origin: bottom center;
+  }
+
+  .lesson-board {
+    right: 10px;
+    top: 18px;
+    width: 48%;
+    min-height: 154px;
+    padding: 16px;
+  }
+
+  .lesson-board h2 {
+    font-size: 17px;
+  }
+
+  .lesson-board ul {
+    margin-top: 12px;
+    font-size: 10px;
+    line-height: 1.55;
+  }
+
+  .student-video-card .px-6 {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .student-video-controls {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .student-video-controls .w-40 {
+    width: 96px;
+  }
+
+  .student-video-controls .ml-auto {
+    margin-left: 0;
+  }
+
+  .progress-ring {
+    width: 82px;
+    height: 82px;
+  }
+
+  .progress-ring span {
+    font-size: 23px;
+  }
+}
+
+@media (max-width: 390px) {
+  .lesson-board {
+    width: 52%;
+    padding: 12px;
+  }
+
+  .lesson-board ul {
+    display: none;
+  }
+
+  .professor-portrait {
+    left: 12%;
   }
 }
