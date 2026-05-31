@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: edunexus-click-validation
+    name: edunexus
     env: node
     plan: free
     buildCommand: npm install && npm run build
