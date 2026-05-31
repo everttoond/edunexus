@@ -454,23 +454,23 @@ function GuidedTourPanel({
   title: string;
 }) {
   return (
-    <aside className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-xl rounded-lg border border-cyan-300/40 bg-slate-950/94 p-4 text-white shadow-[0_24px_80px_rgba(0,0,0,0.35)] backdrop-blur md:bottom-6">
+    <aside className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-xl rounded-lg border border-slate-200 bg-white p-4 text-slate-950 shadow-[0_24px_80px_rgba(15,23,42,0.22)] md:bottom-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
             <span className="grid h-8 w-8 place-items-center rounded-full bg-cyan-300 text-sm font-black text-slate-950">
               {currentStep + 1}
             </span>
-            <h2 className="text-sm font-black uppercase tracking-[0.12em] text-cyan-100">
+            <h2 className="text-sm font-black uppercase tracking-[0.12em] text-slate-950">
               {title}
             </h2>
           </div>
-          <p className="mt-2 text-sm leading-6 text-slate-300">{description}</p>
+          <p className="mt-2 text-sm font-semibold leading-6 text-slate-700">{description}</p>
         </div>
         <button
           type="button"
           onClick={onNext}
-          className="min-h-11 shrink-0 rounded-md bg-cyan-300 px-5 text-sm font-black text-slate-950 transition hover:bg-cyan-200"
+          className="min-h-11 shrink-0 rounded-md bg-slate-950 px-5 text-sm font-black text-white transition hover:bg-slate-800"
         >
           {nextLabel}
         </button>
