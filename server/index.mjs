@@ -7,7 +7,7 @@ const rootDir = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const dataDir = join(rootDir, "data");
 const dbPath = join(dataDir, "clicks.json");
 const distDir = join(rootDir, "dist");
-const port = Number(process.env.PORT || 3001);
+const port = Number(process.env.PORT || 3002);
 
 const contentTypes = {
   ".html": "text/html; charset=utf-8",
