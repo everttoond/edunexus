@@ -8,6 +8,7 @@ const dataDir = join(rootDir, "data");
 const dbPath = join(dataDir, "clicks.json");
 const distDir = join(rootDir, "dist");
 const port = Number(process.env.PORT || 3002);
+const host = process.env.HOST || "0.0.0.0";
 
 const contentTypes = {
   ".html": "text/html; charset=utf-8",
@@ -168,6 +169,7 @@ function serveStatic(request, response, url) {
   const ext = extname(filePath);
   response.writeHead(200, {
     "Content-Type": contentTypes[ext] || "application/octet-stream",
+    "Cache-Control": ext === ".html" ? "no-store" : "public, max-age=31536000, immutable",
   });
   response.end(readFileSync(filePath));
 }
@@ -181,7 +183,7 @@ createServer(async (request, response) => {
   }
 
   serveStatic(request, response, url);
-}).listen(port, () => {
+}).listen(port, host, () => {
   ensureDb();
-  console.log(`Servidor EduNexus rodando em http://localhost:${port}`);
+  console.log(`Servidor EduNexus rodando em http://${host}:${port}`);
 });
