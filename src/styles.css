@@ -82,6 +82,25 @@ code {
   pointer-events: none;
 }
 
+.reference-login-subtitle-override {
+  position: absolute;
+  left: 59.5%;
+  top: 23.65%;
+  z-index: 2;
+  display: grid;
+  width: 33%;
+  height: 7.7%;
+  margin: 0;
+  padding: 0 2%;
+  place-items: center;
+  background: linear-gradient(180deg, #050c1d 0%, #050b1b 100%);
+  color: rgba(226, 232, 240, 0.78);
+  font-size: clamp(10px, 1.3vw, 20px);
+  line-height: 1.55;
+  text-align: center;
+  pointer-events: none;
+}
+
 .reference-hit-area,
 .reference-submit-hit {
   position: absolute;
@@ -514,6 +533,7 @@ code {
   }
 
   .reference-login-form,
+  .reference-login-subtitle-override,
   .reference-copyright-override {
     display: none;
   }

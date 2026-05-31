@@ -230,6 +230,9 @@ function LoginScreen({ onLogin }: { onLogin: () => Promise<void> }) {
         <p className="reference-copyright-override">
           © 2026 EduNexus. Todos os direitos reservados.
         </p>
+        <p className="reference-login-subtitle-override">
+          Acesse a plataforma de aprendizagem adaptativa para o ensino superior.
+        </p>
         <div className="mobile-login-content">
           <div>
             <div className="mobile-login-brand">
@@ -251,7 +254,7 @@ function LoginScreen({ onLogin }: { onLogin: () => Promise<void> }) {
           </div>
           <div className="mobile-login-panel">
             <h2>Bem-vindo ao EduNexus</h2>
-            <p>Acesse uma simulacao de aula adaptativa sobre Andragogia no Ensino Superior.</p>
+            <p>Acesse a plataforma de aprendizagem adaptativa para o ensino superior.</p>
             <button
               type="button"
               onClick={() => onLogin()}
