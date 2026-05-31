@@ -14,6 +14,41 @@ const fallbackStats: StatsResponse = {
   recentEvents: [],
 };
 
+type GuideStep = 0 | 1 | 2 | 3 | 4;
+type AdaptedContent = "infographic" | "summary";
+
+const guideSteps: Array<{
+  title: string;
+  description: string;
+  nextLabel: string;
+}> = [
+  {
+    title: "1 - Interface do gestor",
+    description: "Comece pela visão executiva, onde o decisor entende riscos, turmas e indicadores.",
+    nextLabel: "Próximo",
+  },
+  {
+    title: "2 - Insights de IA",
+    description: "Depois, veja como a IA transforma os dados em recomendações pedagógicas acionáveis.",
+    nextLabel: "Próximo",
+  },
+  {
+    title: "3 - Interface do aluno",
+    description: "Agora avance para a experiência do aluno, que mostra o impacto prático da adaptação.",
+    nextLabel: "Abrir aluno",
+  },
+  {
+    title: "4 - Adaptação infográfico",
+    description: "O aluno pode escolher uma versão visual da aula, organizada em blocos conectados.",
+    nextLabel: "Próximo",
+  },
+  {
+    title: "5 - Adaptação resumo",
+    description: "Por fim, ele acessa o resumo textual adaptado, com opção de copiar o conteúdo.",
+    nextLabel: "Reiniciar guia",
+  },
+];
+
 function getVisitorId() {
   const existing = window.localStorage.getItem(STORAGE_VISITOR_KEY);
   if (existing) return existing;
@@ -285,6 +320,8 @@ function DemoPage({
   const [activeView, setActiveView] = useState<"manager" | "student">(
     viewParam === "student" ? "student" : "manager",
   );
+  const [guideStep, setGuideStep] = useState<GuideStep>(0);
+  const currentGuideStep = guideSteps[guideStep];
 
   const shareViewLink = (view: "manager" | "student") => {
     const url = new URL(window.location.href);
@@ -299,6 +336,13 @@ function DemoPage({
   const changeView = async (view: "manager" | "student") => {
     setActiveView(view);
     await track(view === "manager" ? "view_gestor" : "view_aluno");
+  };
+
+  const advanceGuide = async () => {
+    const nextStep = (guideStep === 4 ? 0 : guideStep + 1) as GuideStep;
+    setGuideStep(nextStep);
+    setActiveView(nextStep <= 2 ? "manager" : "student");
+    await track(`guia_etapa_${nextStep + 1}`);
   };
 
   return (
@@ -324,19 +368,21 @@ function DemoPage({
               <button
                 type="button"
                 onClick={() => changeView("manager")}
-                className={`min-h-11 rounded px-4 text-sm font-bold transition ${
+                className={`relative min-h-11 rounded px-4 text-sm font-bold transition ${
                   activeView === "manager"
                     ? "bg-white text-cobalt shadow-sm"
                     : "text-slate-600 hover:text-slate-950"
                 }`}
               >
+                {guideStep === 0 && <GuideMarker />}
                 Visão do gestor
               </button>
               <button
                 type="button"
                 onClick={() => changeView("student")}
-                className="min-h-11 rounded px-4 text-sm font-bold text-slate-600 transition hover:text-slate-950"
+                className="relative min-h-11 rounded px-4 text-sm font-bold text-slate-600 transition hover:text-slate-950"
               >
+                {guideStep === 2 && <GuideMarker />}
                 Visão do aluno
               </button>
             </div>
@@ -362,28 +408,86 @@ function DemoPage({
       {activeView === "manager" ? (
         <ManagerView
           apiOnline={apiOnline}
+          guideStep={guideStep}
           refreshStats={refreshStats}
           stats={stats}
           track={track}
         />
       ) : (
         <StudentImpactView
+          guideStep={guideStep}
           onGoManager={() => changeView("manager")}
           track={track}
           shareLink={() => shareViewLink("student")}
         />
       )}
+      <GuidedTourPanel
+        currentStep={guideStep}
+        description={currentGuideStep.description}
+        nextLabel={currentGuideStep.nextLabel}
+        onNext={advanceGuide}
+        title={currentGuideStep.title}
+      />
     </div>
+  );
+}
+
+function GuideMarker() {
+  return (
+    <span className="pointer-events-none absolute left-1/2 top-0 z-20 h-8 w-8 -translate-x-1/2 -translate-y-[115%] rounded-full border-2 border-cyan-300 bg-cyan-300/20 shadow-[0_0_28px_rgba(34,211,238,0.85)]">
+      <span className="absolute inset-0 rounded-full bg-cyan-300/40 animate-ping" />
+    </span>
+  );
+}
+
+function GuidedTourPanel({
+  currentStep,
+  description,
+  nextLabel,
+  onNext,
+  title,
+}: {
+  currentStep: GuideStep;
+  description: string;
+  nextLabel: string;
+  onNext: () => Promise<void>;
+  title: string;
+}) {
+  return (
+    <aside className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-xl rounded-lg border border-cyan-300/40 bg-slate-950/94 p-4 text-white shadow-[0_24px_80px_rgba(0,0,0,0.35)] backdrop-blur md:bottom-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-cyan-300 text-sm font-black text-slate-950">
+              {currentStep + 1}
+            </span>
+            <h2 className="text-sm font-black uppercase tracking-[0.12em] text-cyan-100">
+              {title}
+            </h2>
+          </div>
+          <p className="mt-2 text-sm leading-6 text-slate-300">{description}</p>
+        </div>
+        <button
+          type="button"
+          onClick={onNext}
+          className="min-h-11 shrink-0 rounded-md bg-cyan-300 px-5 text-sm font-black text-slate-950 transition hover:bg-cyan-200"
+        >
+          {nextLabel}
+        </button>
+      </div>
+    </aside>
   );
 }
 
 function ManagerView({
   apiOnline,
+  guideStep,
   refreshStats,
   stats,
   track,
 }: {
   apiOnline: boolean;
+  guideStep: GuideStep;
   refreshStats: () => Promise<void>;
   stats: StatsResponse;
   track: (target: string, type?: ClickEventPayload["type"]) => Promise<void>;
@@ -535,7 +639,8 @@ function ManagerView({
           </div>
         </div>
 
-        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+        <div className="relative rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+          {guideStep === 1 && <GuideMarker />}
           <p className="text-xs font-black uppercase tracking-[0.16em] text-cobalt">
             Recomendações da IA
           </p>
@@ -968,6 +1073,321 @@ function LegacyManagerView({
 }
 
 function StudentImpactView({
+  guideStep,
+  onGoManager,
+  track,
+  shareLink,
+}: {
+  guideStep: GuideStep;
+  onGoManager: () => void;
+  track: (target: string, type?: ClickEventPayload["type"]) => Promise<void>;
+  shareLink: () => void;
+}) {
+  const [activeContent, setActiveContent] = useState<AdaptedContent>("summary");
+
+  useEffect(() => {
+    if (guideStep === 3) setActiveContent("infographic");
+    if (guideStep === 4) setActiveContent("summary");
+  }, [guideStep]);
+
+  const selectContent = async (content: AdaptedContent) => {
+    setActiveContent(content);
+    await track(content === "infographic" ? "aluno_abrir_infografico" : "aluno_abrir_resumo");
+  };
+
+  return (
+    <section className="student-learning-shell min-h-screen overflow-hidden pb-28">
+      <header className="relative z-10 border-b border-white/10 bg-[#050b1d]/92">
+        <div className="mx-auto flex max-w-[1180px] items-center justify-between gap-4 px-4 py-3 md:px-0 md:py-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="student-logo-mark shrink-0" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+              <span />
+              <span />
+              <span />
+            </div>
+            <div className="min-w-0">
+              <p className="bg-gradient-to-r from-blue-500 to-cyan-300 bg-clip-text text-2xl font-black leading-none text-transparent md:text-3xl">
+                EduNexus
+              </p>
+              <p className="mt-1 hidden text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400 sm:block">
+                Conecta · Dissemina · Transforma
+              </p>
+            </div>
+          </div>
+
+          <nav className="hidden items-center gap-8 text-sm font-bold text-slate-300 md:flex">
+            <span>Meus Cursos</span>
+          </nav>
+
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <p className="text-sm font-black text-white">Lucas Andrade</p>
+              <p className="hidden text-xs text-slate-400 sm:block">Estudante</p>
+            </div>
+            <div className="h-10 w-10 rounded-full border border-cyan-300/40 bg-gradient-to-br from-amber-200 to-slate-700" />
+            <button
+              type="button"
+              onClick={shareLink}
+              className="hidden min-h-9 rounded-md border border-white/10 px-3 text-xs font-bold text-slate-300 transition hover:bg-white/10 lg:block"
+            >
+              Link
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div className="student-network-bg" aria-hidden="true" />
+
+      <main className="relative z-10 mx-auto grid max-w-[1180px] gap-6 px-4 py-6 lg:grid-cols-[1fr_270px] lg:px-0">
+        <div className="min-w-0">
+          <div className="text-sm text-slate-400">
+            Meus Cursos <span className="mx-2 text-slate-600">›</span> Metodologias Ativas e
+            Andragogia <span className="mx-2 text-slate-600">›</span> Módulo 1
+          </div>
+
+          <h1 className="mt-4 text-2xl font-black leading-tight tracking-normal text-white md:text-4xl">
+            <span className="text-violet-400">Aula 1:</span> O impacto da{" "}
+            <span className="bg-gradient-to-r from-cyan-300 to-blue-300 bg-clip-text text-transparent">
+              Andragogia no Ensino Superior
+            </span>
+          </h1>
+
+          <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-300">
+            <span>Profª Dra. Camila Rezende</span>
+            <span>Módulo 1 - Fundamentos da Andragogia</span>
+            <span>28 min</span>
+          </div>
+
+          <div className="student-video-card mt-6">
+            <div className="student-video-scene">
+              <div className="professor-portrait">
+                <div className="professor-head" />
+                <div className="professor-body" />
+                <div className="professor-arm professor-arm-left" />
+                <div className="professor-arm professor-arm-right" />
+              </div>
+              <div className="lesson-board">
+                <h2>Andragogia no Ensino Superior</h2>
+                <ul>
+                  <li>Autonomia</li>
+                  <li>Experiência prévia</li>
+                  <li>Aplicação prática</li>
+                  <li>Motivação</li>
+                  <li>Aprendizagem significativa</li>
+                </ul>
+              </div>
+              <div className="video-brand">EduNexus</div>
+            </div>
+
+            <div className="px-4 pb-5 md:px-6">
+              <div className="h-1 rounded-full bg-white/15">
+                <div className="h-1 w-[24%] rounded-full bg-gradient-to-r from-violet-500 to-cyan-400" />
+              </div>
+              <div className="student-video-controls mt-4 flex items-center gap-4 text-white">
+                <button
+                  type="button"
+                  onClick={() => track("aluno_play_video")}
+                  className="text-xl"
+                  aria-label="Reproduzir aula"
+                >
+                  ▶
+                </button>
+                <div className="h-1 min-w-[96px] flex-1 rounded-full bg-white/10 sm:max-w-[210px]">
+                  <div className="h-1 w-2/3 rounded-full bg-violet-400" />
+                </div>
+                <span className="ml-auto text-sm text-slate-300">06:47 / 28:00</span>
+              </div>
+            </div>
+          </div>
+
+          <section className="mt-6">
+            <h2 className="text-xl font-black text-white">Conteúdos adaptados</h2>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <StudentAdaptedTab
+                active={activeContent === "infographic"}
+                guideActive={guideStep === 3}
+                title="Infográfico"
+                text="Visualize os principais conceitos desta aula."
+                onClick={() => selectContent("infographic")}
+              />
+              <StudentAdaptedTab
+                active={activeContent === "summary"}
+                guideActive={guideStep === 4}
+                title="Resumo do vídeo"
+                text="Leia um resumo adaptado com o essencial da aula."
+                onClick={() => selectContent("summary")}
+              />
+            </div>
+          </section>
+
+          <div className="mt-5 transition-all duration-300">
+            {activeContent === "infographic" ? (
+              <StudentInfographic />
+            ) : (
+              <StudentSummary track={track} />
+            )}
+          </div>
+        </div>
+
+        <aside className="space-y-5 lg:pt-[122px]">
+          <div className="rounded-xl border border-white/15 bg-white/[0.055] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
+            <h2 className="text-xl font-black text-white">Seu progresso</h2>
+            <div className="mt-6 flex items-center gap-5">
+              <div className="progress-ring" style={{ "--progress": "32%" } as CSSProperties}>
+                <span>32%</span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-slate-300">do módulo concluído</p>
+                <div className="mt-4 h-2 rounded-full bg-white/10">
+                  <div className="h-2 w-[42%] rounded-full bg-cyan-400" />
+                </div>
+                <p className="mt-4 text-sm text-slate-400">4 de 12 aulas</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-white/15 bg-white/[0.055] p-5">
+            <h3 className="font-black text-white">Impacto simulado</h3>
+            <div className="mt-4 space-y-4">
+              <ProgressItem label="Atenção" value={68} />
+              <ProgressItem label="Compreensão" value={74} />
+              <ProgressItem label="Pronto para quiz" value={58} />
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onGoManager}
+            className="hidden w-full rounded-md border border-white/10 px-4 py-3 text-sm font-bold text-slate-300 transition hover:bg-white/10 lg:block"
+          >
+            Voltar para gestor
+          </button>
+        </aside>
+      </main>
+    </section>
+  );
+}
+
+function StudentAdaptedTab({
+  active,
+  guideActive,
+  onClick,
+  text,
+  title,
+}: {
+  active: boolean;
+  guideActive: boolean;
+  onClick: () => void;
+  text: string;
+  title: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`relative min-h-[104px] rounded-xl border p-4 text-left transition duration-300 ${
+        active
+          ? "border-cyan-400 bg-cyan-400/10 shadow-[0_0_28px_rgba(14,165,233,0.16)]"
+          : "border-white/12 bg-white/[0.04] hover:border-white/25 hover:bg-white/[0.065]"
+      }`}
+    >
+      {guideActive && <GuideMarker />}
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="font-black text-white">{title}</h3>
+          <p className="mt-2 text-sm leading-5 text-slate-300">{text}</p>
+        </div>
+        <span
+          className={`mt-1 h-3 w-3 rounded-full ${
+            active ? "bg-cyan-300 shadow-[0_0_18px_rgba(34,211,238,0.9)]" : "bg-white/20"
+          }`}
+        />
+      </div>
+    </button>
+  );
+}
+
+function StudentSummary({
+  track,
+}: {
+  track: (target: string, type?: ClickEventPayload["type"]) => Promise<void>;
+}) {
+  return (
+    <article className="rounded-xl border border-white/15 bg-white/[0.055] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.25)] md:p-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-xl font-black text-white">Resumo do vídeo</h2>
+        <button
+          type="button"
+          onClick={() => track("aluno_copiar_resumo")}
+          className="min-h-10 rounded-md border border-white/15 px-3 text-sm font-semibold text-slate-300 transition hover:bg-white/10"
+        >
+          Copiar resumo
+        </button>
+      </div>
+      <p className="mt-4 text-base leading-8 text-slate-300">
+        Esta aula apresenta o impacto da Andragogia no Ensino Superior, destacando
+        como os princípios da aprendizagem de adultos transformam a experiência
+        educacional. A andragogia valoriza a autonomia do estudante, reconhece a
+        experiência prévia como recurso de aprendizagem e prioriza a aplicação prática
+        do conhecimento. No ensino superior, essa abordagem torna as aulas mais
+        significativas, melhora o engajamento e aproxima teoria e realidade
+        profissional.
+      </p>
+    </article>
+  );
+}
+
+function StudentInfographic() {
+  const blocks = [
+    {
+      title: "Autonomia",
+      text: "O adulto aprende melhor quando participa das decisões sobre seu aprendizado.",
+    },
+    {
+      title: "Experiência prévia",
+      text: "Vivências pessoais e profissionais ajudam a conectar teoria e prática.",
+    },
+    {
+      title: "Aplicação prática",
+      text: "O conteúdo precisa resolver problemas reais ou próximos da realidade do aluno.",
+    },
+    {
+      title: "Motivação",
+      text: "Adultos se engajam mais quando entendem a utilidade do que estão estudando.",
+    },
+    {
+      title: "Ensino superior",
+      text: "A andragogia torna a aula mais ativa, contextualizada e significativa.",
+    },
+  ];
+
+  return (
+    <article className="rounded-xl border border-cyan-300/25 bg-cyan-300/[0.055] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.25)] md:p-6">
+      <h2 className="text-xl font-black text-white">Infográfico da aula</h2>
+      <div className="mt-5 grid gap-3 md:grid-cols-5">
+        {blocks.map((block, index) => (
+          <div key={block.title} className="relative">
+            {index > 0 && (
+              <span className="absolute -left-3 top-9 hidden h-px w-3 bg-cyan-300/50 md:block" />
+            )}
+            <div className="h-full rounded-xl border border-white/15 bg-slate-950/35 p-4">
+              <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-violet-500 to-cyan-300 text-sm font-black text-white">
+                {index + 1}
+              </span>
+              <h3 className="mt-4 font-black text-white">{block.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-300">{block.text}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function LegacyStudentLearningView({
   onGoManager,
   track,
   shareLink,
