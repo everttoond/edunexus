@@ -468,14 +468,15 @@ function GuideMarker({ onActivate }: { onActivate: () => Promise<void> }) {
   return (
     <span
       aria-label="Avançar etapa do guia"
-      className="absolute left-1/2 top-0 z-20 h-9 w-9 -translate-x-1/2 -translate-y-[115%] cursor-pointer rounded-full border-2 border-cyan-300 bg-cyan-300/25 shadow-[0_0_28px_rgba(34,211,238,0.85)] outline-none transition hover:scale-110 focus-visible:ring-4 focus-visible:ring-cyan-300/45"
+      className="absolute left-1/2 top-0 z-20 grid h-16 w-16 -translate-x-1/2 -translate-y-[122%] cursor-pointer place-items-center rounded-full border-4 border-white bg-cyan-300 text-2xl font-black text-slate-950 shadow-[0_0_0_6px_rgba(14,165,233,0.34),0_0_42px_rgba(34,211,238,0.95)] outline-none transition hover:scale-110 focus-visible:ring-4 focus-visible:ring-cyan-300/55"
       onClick={handleActivate}
       onKeyDown={handleKeyDown}
       role="button"
       tabIndex={0}
       title="Avançar etapa"
     >
-      <span className="absolute inset-0 rounded-full bg-cyan-300/40 animate-ping" />
+      <span className="absolute inset-[-10px] rounded-full border-2 border-cyan-300/70 bg-cyan-300/30 animate-ping" />
+      <span className="relative z-10">→</span>
     </span>
   );
 }
