@@ -319,8 +319,8 @@ function DemoPage({
             </h1>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="grid grid-cols-2 rounded-md border border-slate-200 bg-slate-100 p-1 sm:flex">
+          <div className="flex gap-3 overflow-x-auto pb-1 sm:items-center sm:pb-0">
+            <div className="grid min-w-max grid-cols-2 rounded-md border border-slate-200 bg-slate-100 p-1 sm:flex">
               <button
                 type="button"
                 onClick={() => changeView("manager")}
@@ -343,9 +343,16 @@ function DemoPage({
             <button
               type="button"
               onClick={() => shareViewLink(activeView)}
-              className="min-h-11 rounded-md border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+              className="min-h-11 min-w-max rounded-md border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
             >
               Copiar link {activeView === "manager" ? "gestor" : "aluno"}
+            </button>
+            <button
+              type="button"
+              onClick={() => track("gestor_gerar_relatorio_topo")}
+              className="min-h-11 min-w-max rounded-md bg-cobalt px-4 text-sm font-bold text-white transition hover:bg-blue-700"
+            >
+              Gerar relatório
             </button>
           </div>
         </div>
@@ -371,6 +378,474 @@ function DemoPage({
 }
 
 function ManagerView({
+  apiOnline,
+  refreshStats,
+  stats,
+  track,
+}: {
+  apiOnline: boolean;
+  refreshStats: () => Promise<void>;
+  stats: StatsResponse;
+  track: (target: string, type?: ClickEventPayload["type"]) => Promise<void>;
+}) {
+  const validationMetrics = [
+    { label: "Clicks", value: stats.totalClicks },
+    { label: "Visitas", value: stats.pageViews },
+    { label: "Eventos", value: stats.totalEvents },
+    { label: "Pessoas", value: stats.uniqueVisitors },
+  ];
+
+  return (
+    <section className="mx-auto max-w-7xl px-4 py-6 sm:px-5 md:px-8 md:py-8">
+      <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:p-7">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-4xl">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-cobalt">
+              Visão do gestor
+            </p>
+            <h2 className="mt-2 text-2xl font-black leading-tight tracking-normal text-slate-950 sm:text-3xl">
+              Central de Impacto Pedagógico
+            </h2>
+            <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
+              Painel para coordenadores, diretores e mantenedores testarem onde a
+              plataforma reduz risco de evasão, acelera adaptações e mostra impacto real
+              no acompanhamento dos alunos.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => track("gestor_gerar_relatorio")}
+            className="min-h-11 w-full rounded-md bg-cobalt px-5 py-3 text-sm font-black text-white transition hover:bg-blue-700 sm:w-auto"
+          >
+            Gerar relatório executivo
+          </button>
+        </div>
+
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          <ExecutiveMetric
+            label="Alunos em acompanhamento"
+            value="1.248"
+            detail="+18% nos últimos 30 dias"
+            tone="blue"
+          />
+          <ExecutiveMetric
+            label="Alunos em risco de evasão"
+            value="14%"
+            detail="32 alunos precisam de intervenção"
+            tone="red"
+          />
+          <ExecutiveMetric
+            label="Materiais adaptados"
+            value="376"
+            detail="+41% no mês"
+            tone="green"
+          />
+          <ExecutiveMetric
+            label="Tempo economizado pela equipe"
+            value="82h"
+            detail="Estimativa baseada nas adaptações geradas"
+            tone="amber"
+          />
+          <ExecutiveMetric
+            label="Interações com Edu AI"
+            value="4.812"
+            detail="Dúvidas, resumos e transposições"
+            tone="purple"
+          />
+        </div>
+      </div>
+
+      <div className="mt-5 rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-red-600">
+              Alertas prioritários
+            </p>
+            <h3 className="mt-2 text-xl font-black text-slate-950">
+              Intervenções sugeridas antes da perda de engajamento
+            </h3>
+          </div>
+          <span className="w-fit rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-black text-red-700">
+            3 ações recomendadas
+          </span>
+        </div>
+
+        <div className="mt-5 grid gap-4 lg:grid-cols-3">
+          <PriorityAlert
+            course="Pedagogia - 3º semestre"
+            issue="32% sem acompanhamento recente"
+            priority="Alta"
+            action="Liberar resumo visual e quiz rápido"
+            tone="red"
+            track={track}
+          />
+          <PriorityAlert
+            course="Engenharia de Produção - 5º semestre"
+            issue="21% com baixa conclusão"
+            priority="Média"
+            action="Enviar reforço prático"
+            tone="amber"
+            track={track}
+          />
+          <PriorityAlert
+            course="Administração - 2º semestre"
+            issue="12% com pouca interação na Edu AI"
+            priority="Baixa"
+            action="Ativar perguntas guiadas"
+            tone="green"
+            track={track}
+          />
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">
+                Mapa de risco
+              </p>
+              <h3 className="mt-2 text-xl font-black text-slate-950">
+                Turmas que precisam de atenção
+              </h3>
+            </div>
+            <span className="w-fit rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-700">
+              Atualizado hoje
+            </span>
+          </div>
+
+          <div className="mt-5 hidden overflow-hidden rounded-lg border border-slate-200 md:block">
+            <div className="grid grid-cols-[1fr_90px_120px_1.2fr] bg-slate-50 px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-slate-500">
+              <span>Curso</span>
+              <span>Risco</span>
+              <span>Status</span>
+              <span>Ação sugerida</span>
+            </div>
+            <RiskTableRow course="Pedagogia" risk="32%" status="Atenção" action="Revisão adaptada antes da prova" tone="red" />
+            <RiskTableRow course="Engenharia" risk="21%" status="Moderado" action="Resumo prático e quiz diagnóstico" tone="amber" />
+            <RiskTableRow course="Administração" risk="12%" status="Estável" action="Manter monitoramento" tone="green" />
+            <RiskTableRow course="Direito" risk="8%" status="Estável" action="Nenhuma ação urgente" tone="green" />
+          </div>
+
+          <div className="mt-5 grid gap-3 md:hidden">
+            <RiskMobileCard course="Pedagogia" risk="32%" status="Atenção" action="Revisão adaptada antes da prova" tone="red" />
+            <RiskMobileCard course="Engenharia" risk="21%" status="Moderado" action="Resumo prático e quiz diagnóstico" tone="amber" />
+            <RiskMobileCard course="Administração" risk="12%" status="Estável" action="Manter monitoramento" tone="green" />
+            <RiskMobileCard course="Direito" risk="8%" status="Estável" action="Nenhuma ação urgente" tone="green" />
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-cobalt">
+            Recomendações da IA
+          </p>
+          <h3 className="mt-2 text-xl font-black text-slate-950">
+            Próximas ações por prioridade
+          </h3>
+          <div className="mt-5 grid gap-3">
+            <AiRecommendation
+              priority="Alta"
+              action="Criar trilha curta para alunos abaixo de 40% de progresso"
+              impact="Reduz abandono antes da avaliação"
+              effort="15 min"
+              tone="red"
+            />
+            <AiRecommendation
+              priority="Média"
+              action="Enviar resumo visual para a turma com maior queda de atenção"
+              impact="Aumenta conclusão da aula"
+              effort="10 min"
+              tone="amber"
+            />
+            <AiRecommendation
+              priority="Baixa"
+              action="Ativar perguntas guiadas no fechamento do módulo"
+              impact="Gera evidências para o professor"
+              effort="5 min"
+              tone="green"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-5 rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+        <div className="max-w-3xl">
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-mint">
+            Evidência de impacto
+          </p>
+          <h3 className="mt-2 text-xl font-black text-slate-950">
+            O que o gestor consegue validar no teste
+          </h3>
+        </div>
+        <div className="mt-5 grid gap-4 md:grid-cols-3">
+          <ImpactEvidence
+            title="Antes"
+            items={["Aula linear", "Dúvidas dispersas", "Baixa visibilidade da evasão"]}
+            tone="slate"
+          />
+          <ImpactEvidence
+            title="Depois"
+            items={["Resumo adaptado", "Quiz rápido", "Alertas por turma"]}
+            tone="blue"
+          />
+          <ImpactEvidence
+            title="Resultado"
+            items={["+31% de conclusão", "82h economizadas", "Ações pedagógicas rastreáveis"]}
+            tone="green"
+          />
+        </div>
+      </div>
+
+      <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-5 md:p-6">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">
+              Validação do MVP
+            </p>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+              Métricas do link enviado para conhecidos. Esta área fica como apoio da
+              validação comercial, sem competir com a visão pedagógica do gestor.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {validationMetrics.map((metric) => (
+              <MvpMetric key={metric.label} label={metric.label} value={metric.value} />
+            ))}
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              onClick={refreshStats}
+              className="min-h-10 rounded-md border border-slate-300 bg-white px-4 text-sm font-black text-slate-700 transition hover:bg-slate-100"
+            >
+              Atualizar
+            </button>
+            <button
+              type="button"
+              onClick={() => track("gestor_ver_relatorio_validacao")}
+              className="min-h-10 rounded-md bg-slate-950 px-4 text-sm font-black text-white transition hover:bg-slate-800"
+            >
+              Ver relatório de validação
+            </button>
+          </div>
+        </div>
+        {!apiOnline && (
+          <p className="mt-4 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-bold text-amber-800">
+            API local offline. Rode npm run api ou npm start para atualizar os dados.
+          </p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function ExecutiveMetric({
+  label,
+  value,
+  detail,
+  tone,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  tone: "blue" | "red" | "green" | "amber" | "purple";
+}) {
+  const tones = {
+    blue: "border-blue-200 bg-blue-50 text-blue-700",
+    red: "border-red-200 bg-red-50 text-red-700",
+    green: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    amber: "border-amber-200 bg-amber-50 text-amber-700",
+    purple: "border-violet-200 bg-violet-50 text-violet-700",
+  };
+
+  return (
+    <article className={`rounded-lg border p-4 ${tones[tone]}`}>
+      <p className="min-h-10 text-sm font-black leading-5 text-slate-800">{label}</p>
+      <p className="mt-3 text-3xl font-black tracking-normal text-slate-950">{value}</p>
+      <p className="mt-2 text-sm font-bold leading-5">{detail}</p>
+    </article>
+  );
+}
+
+function PriorityAlert({
+  course,
+  issue,
+  priority,
+  action,
+  tone,
+  track,
+}: {
+  course: string;
+  issue: string;
+  priority: string;
+  action: string;
+  tone: "red" | "amber" | "green";
+  track: (target: string, type?: ClickEventPayload["type"]) => Promise<void>;
+}) {
+  const tones = {
+    red: "border-red-200 bg-red-50 text-red-700",
+    amber: "border-amber-200 bg-amber-50 text-amber-700",
+    green: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  };
+
+  return (
+    <article className="flex min-h-[250px] flex-col rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <h4 className="text-base font-black leading-6 text-slate-950">{course}</h4>
+        <span className={`rounded-full border px-2.5 py-1 text-xs font-black ${tones[tone]}`}>
+          {priority}
+        </span>
+      </div>
+      <p className="mt-4 text-2xl font-black text-slate-950">{issue}</p>
+      <p className="mt-3 text-sm leading-6 text-slate-600">
+        Ação sugerida: <strong className="text-slate-900">{action}</strong>
+      </p>
+      <button
+        type="button"
+        onClick={() => track(`gestor_intervencao_${course.toLowerCase().replace(/[^a-z0-9]+/g, "_")}`)}
+        className="mt-auto min-h-10 rounded-md bg-cobalt px-4 text-sm font-black text-white transition hover:bg-blue-700"
+      >
+        Gerar intervenção
+      </button>
+    </article>
+  );
+}
+
+function RiskTableRow({
+  course,
+  risk,
+  status,
+  action,
+  tone,
+}: {
+  course: string;
+  risk: string;
+  status: string;
+  action: string;
+  tone: "red" | "amber" | "green";
+}) {
+  return (
+    <div className="grid grid-cols-[1fr_90px_120px_1.2fr] border-t border-slate-200 px-4 py-4 text-sm text-slate-700">
+      <span className="font-black text-slate-950">{course}</span>
+      <span className="font-black">{risk}</span>
+      <RiskBadge status={status} tone={tone} />
+      <span>{action}</span>
+    </div>
+  );
+}
+
+function RiskMobileCard({
+  course,
+  risk,
+  status,
+  action,
+  tone,
+}: {
+  course: string;
+  risk: string;
+  status: string;
+  action: string;
+  tone: "red" | "amber" | "green";
+}) {
+  return (
+    <article className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h4 className="font-black text-slate-950">{course}</h4>
+          <p className="mt-1 text-sm text-slate-600">{action}</p>
+        </div>
+        <span className="text-xl font-black text-slate-950">{risk}</span>
+      </div>
+      <div className="mt-3">
+        <RiskBadge status={status} tone={tone} />
+      </div>
+    </article>
+  );
+}
+
+function RiskBadge({ status, tone }: { status: string; tone: "red" | "amber" | "green" }) {
+  const tones = {
+    red: "bg-red-100 text-red-700",
+    amber: "bg-amber-100 text-amber-700",
+    green: "bg-emerald-100 text-emerald-700",
+  };
+
+  return (
+    <span className={`w-fit rounded-full px-2.5 py-1 text-xs font-black ${tones[tone]}`}>
+      {status}
+    </span>
+  );
+}
+
+function AiRecommendation({
+  priority,
+  action,
+  impact,
+  effort,
+  tone,
+}: {
+  priority: string;
+  action: string;
+  impact: string;
+  effort: string;
+  tone: "red" | "amber" | "green";
+}) {
+  return (
+    <article className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <RiskBadge status={priority} tone={tone} />
+          <h4 className="mt-3 text-base font-black leading-6 text-slate-950">{action}</h4>
+        </div>
+        <span className="w-fit rounded-full bg-white px-3 py-1 text-xs font-black text-slate-600 shadow-sm">
+          {effort}
+        </span>
+      </div>
+      <p className="mt-3 text-sm leading-6 text-slate-600">{impact}</p>
+    </article>
+  );
+}
+
+function ImpactEvidence({
+  title,
+  items,
+  tone,
+}: {
+  title: string;
+  items: string[];
+  tone: "slate" | "blue" | "green";
+}) {
+  const tones = {
+    slate: "border-slate-200 bg-slate-50",
+    blue: "border-blue-200 bg-blue-50",
+    green: "border-emerald-200 bg-emerald-50",
+  };
+
+  return (
+    <article className={`rounded-lg border p-4 ${tones[tone]}`}>
+      <h4 className="text-lg font-black text-slate-950">{title}</h4>
+      <ul className="mt-4 space-y-2 text-sm leading-6 text-slate-700">
+        {items.map((item) => (
+          <li key={item} className="flex gap-2">
+            <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-cobalt" />
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+    </article>
+  );
+}
+
+function MvpMetric({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="min-w-[90px] rounded-md border border-slate-200 bg-white px-3 py-2 text-center">
+      <p className="text-lg font-black text-slate-950">{value.toLocaleString("pt-BR")}</p>
+      <p className="text-xs font-bold text-slate-500">{label}</p>
+    </div>
+  );
+}
+
+function LegacyManagerView({
   apiOnline,
   refreshStats,
   stats,
