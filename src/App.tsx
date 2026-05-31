@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { CSSProperties, FormEvent } from "react";
+import type { CSSProperties, FormEvent, KeyboardEvent, MouseEvent } from "react";
 import type { ClickEventPayload, StatsResponse } from "./types";
 
 const STORAGE_VISITOR_KEY = "edunexus_visitor_id";
@@ -374,7 +374,7 @@ function DemoPage({
                     : "text-slate-600 hover:text-slate-950"
                 }`}
               >
-                {guideStep === 0 && <GuideMarker />}
+                {guideStep === 0 && <GuideMarker onActivate={advanceGuide} />}
                 Visão do gestor
               </button>
               <button
@@ -382,7 +382,7 @@ function DemoPage({
                 onClick={() => changeView("student")}
                 className="relative min-h-11 rounded px-4 text-sm font-bold text-slate-600 transition hover:text-slate-950"
               >
-                {guideStep === 2 && <GuideMarker />}
+                {guideStep === 2 && <GuideMarker onActivate={advanceGuide} />}
                 Visão do aluno
               </button>
             </div>
@@ -409,6 +409,7 @@ function DemoPage({
         <ManagerView
           apiOnline={apiOnline}
           guideStep={guideStep}
+          onGuideNext={advanceGuide}
           refreshStats={refreshStats}
           stats={stats}
           track={track}
@@ -416,6 +417,7 @@ function DemoPage({
       ) : (
         <StudentImpactView
           guideStep={guideStep}
+          onGuideNext={advanceGuide}
           onGoManager={() => changeView("manager")}
           track={track}
           shareLink={() => shareViewLink("student")}
@@ -432,9 +434,30 @@ function DemoPage({
   );
 }
 
-function GuideMarker() {
+function GuideMarker({ onActivate }: { onActivate: () => Promise<void> }) {
+  const handleActivate = (event: MouseEvent<HTMLSpanElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    void onActivate();
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLSpanElement>) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    event.stopPropagation();
+    void onActivate();
+  };
+
   return (
-    <span className="pointer-events-none absolute left-1/2 top-0 z-20 h-8 w-8 -translate-x-1/2 -translate-y-[115%] rounded-full border-2 border-cyan-300 bg-cyan-300/20 shadow-[0_0_28px_rgba(34,211,238,0.85)]">
+    <span
+      aria-label="Avançar etapa do guia"
+      className="absolute left-1/2 top-0 z-20 h-9 w-9 -translate-x-1/2 -translate-y-[115%] cursor-pointer rounded-full border-2 border-cyan-300 bg-cyan-300/25 shadow-[0_0_28px_rgba(34,211,238,0.85)] outline-none transition hover:scale-110 focus-visible:ring-4 focus-visible:ring-cyan-300/45"
+      onClick={handleActivate}
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={0}
+      title="Avançar etapa"
+    >
       <span className="absolute inset-0 rounded-full bg-cyan-300/40 animate-ping" />
     </span>
   );
@@ -482,12 +505,14 @@ function GuidedTourPanel({
 function ManagerView({
   apiOnline,
   guideStep,
+  onGuideNext,
   refreshStats,
   stats,
   track,
 }: {
   apiOnline: boolean;
   guideStep: GuideStep;
+  onGuideNext: () => Promise<void>;
   refreshStats: () => Promise<void>;
   stats: StatsResponse;
   track: (target: string, type?: ClickEventPayload["type"]) => Promise<void>;
@@ -640,7 +665,7 @@ function ManagerView({
         </div>
 
         <div className="relative rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:p-6">
-          {guideStep === 1 && <GuideMarker />}
+          {guideStep === 1 && <GuideMarker onActivate={onGuideNext} />}
           <p className="text-xs font-black uppercase tracking-[0.16em] text-cobalt">
             Recomendações da IA
           </p>
@@ -1074,11 +1099,13 @@ function LegacyManagerView({
 
 function StudentImpactView({
   guideStep,
+  onGuideNext,
   onGoManager,
   track,
   shareLink,
 }: {
   guideStep: GuideStep;
+  onGuideNext: () => Promise<void>;
   onGoManager: () => void;
   track: (target: string, type?: ClickEventPayload["type"]) => Promise<void>;
   shareLink: () => void;
@@ -1209,6 +1236,7 @@ function StudentImpactView({
               <StudentAdaptedTab
                 active={activeContent === "infographic"}
                 guideActive={guideStep === 3}
+                onGuideNext={onGuideNext}
                 title="Infográfico"
                 text="Visualize os principais conceitos desta aula."
                 onClick={() => selectContent("infographic")}
@@ -1216,6 +1244,7 @@ function StudentImpactView({
               <StudentAdaptedTab
                 active={activeContent === "summary"}
                 guideActive={guideStep === 4}
+                onGuideNext={onGuideNext}
                 title="Resumo do vídeo"
                 text="Leia um resumo adaptado com o essencial da aula."
                 onClick={() => selectContent("summary")}
@@ -1274,12 +1303,14 @@ function StudentImpactView({
 function StudentAdaptedTab({
   active,
   guideActive,
+  onGuideNext,
   onClick,
   text,
   title,
 }: {
   active: boolean;
   guideActive: boolean;
+  onGuideNext: () => Promise<void>;
   onClick: () => void;
   text: string;
   title: string;
@@ -1294,7 +1325,7 @@ function StudentAdaptedTab({
           : "border-white/12 bg-white/[0.04] hover:border-white/25 hover:bg-white/[0.065]"
       }`}
     >
-      {guideActive && <GuideMarker />}
+      {guideActive && <GuideMarker onActivate={onGuideNext} />}
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="font-black text-white">{title}</h3>
